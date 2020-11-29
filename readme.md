@@ -1,6 +1,8 @@
 # Minimalist TUI Todo
 Minimal todo list with simple and customizable UI in linux terminal.
 
+![screenshot](screenshot.jpeg)
+
 ## Instalation and running
 Simply copy the _mintodo_ file into a directory with your binaries, for example into `home/user/.local/bin` 
 
@@ -47,3 +49,6 @@ color_promts = 7
 color_confirm = 1
 ```
 When configuring colors, numbers mean: 1 - red, 2 - green, 3 - yellow, 4 - blue, 5 - magenta, 6 - cyan, 7 - white
+
+## Other programs
+For similar minimalist terminal expirience, check out my [calendar](https://github.com/anufrievroman/minimalist-tui-calendar).
