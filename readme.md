@@ -24,6 +24,8 @@ Then, run by just typing `mintodo` in a linux terminal.
 
 `D` - delete all tasks
 
+`?` - toggle footer
+
 `q` - quit
 
 ## Configuration
