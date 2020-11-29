@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from #!/usr/bin/env python
-
 from curses import *
 import csv
 from pathlib import Path
@@ -21,7 +19,7 @@ conf = ConfigParser()
 def create_config():
     '''Create config file if it does not exist yet'''
     conf["Parameters"] = {
-        "hint": "a - add new · v - mark as done · i - mark as important · u - unmark · e - edit · d - delete · D - delete all · q - quit",
+        "hint": "a: add new · v: mark as done · i: mark as important · u: unmark · e: edit · d: delete · D: delete all · ?: toggle hints · q: quit",
         "show_keybindings": "Yes",
         "use_unicode_icons": "Yes",
         "delete_confirmation": "No",
@@ -289,7 +287,7 @@ def main(stdscr):
     curs_set(False)
     y_max, x_max = stdscr.getmaxyx()
     running = True
-    key = 27
+    show_hints = SHOW_KEYBINDINGS
     while (running):
         stdscr.clear()
         noecho()
@@ -312,8 +310,9 @@ def main(stdscr):
                 stdscr.addstr(index+shift,3,str(task), color_pair(2))
 
 	# Display the hints
-        if SHOW_KEYBINDINGS:
+        if show_hints:
             stdscr.addstr(y_max - 1, 1, HINT[:x_max-2], color_pair(4))
+
         # stdscr.addstr(y_max - 2, 0, "You pressed"+str(key))
         stdscr.refresh()
 
@@ -335,304 +334,7 @@ def main(stdscr):
         if key == 117: unmark(stdscr, tasks, statuses)              # "u" for unmark
         if key == 100: delete(stdscr, tasks, statuses)	            # "d" for delete
         if key == 101: edit(stdscr, tasks, statuses)	            # "e" for edit
-
-    echo()
-    curs_set(True)
-    endwin()
-    return
-
-if __name__ == "__main__":
-    wrapper(main)
-curses import *
-import csv
-from pathlib import Path
-import os
-from configparser import ConfigParser
-
-
-# LOAD CONFIG AND DATA
-config_folder = str(Path.home())+"/.config/mintodo"
-if not os.path.exists(config_folder):
-    os.makedirs(config_folder)
-DATAFILE = str(config_folder) + "/tasks.csv"
-
-config_file = str(Path.home()) + "/.config/mintodo/config.ini"
-conf = ConfigParser()
-
-def create_config():
-    '''Create config file if it does not exist yet'''
-    conf["Parameters"] = {
-        "hint": "a - add new • v - mark as done • u - unmark • d - delete • e - edit • D - delete all • q - quit",
-        "show_keybindings": "Yes",
-        "delete_confirmation": "No",
-        "done_icon": "✔",
-        "todo_icon": "•",
-        "show_title": "Yes",
-        "header": "TODO LIST:",
-        }
-
-    conf["Colors"] = {
-        "color_todo": "7",
-        "color_done": "6",
-        "color_title": "1",
-        "color_hints": "7",
-        "color_promts": "7",
-        "color_confirm": "1",
-        }
-    with open(config_file, 'w') as f:
-        conf.write(f)
-
-if not os.path.exists(config_file):
-    create_config()
-conf.read(config_file)
-TITLE               = conf.get("Parameters", "header")
-HINT                = conf.get("Parameters", "hint")
-DONE_ICON           = conf.get("Parameters", "done_icon")
-TODO_ICON           = conf.get("Parameters", "todo_icon")
-SHOW_TITLE          = conf.getboolean("Parameters", "show_title")
-SHOW_KEYBINDINGS    = conf.getboolean("Parameters", "show_keybindings")
-DELETE_CONFIRMATION = conf.getboolean("Parameters", "delete_confirmation")
-
-COLOR_TODO    = int(conf.get("Colors", "color_todo"))
-COLOR_DONE    = int(conf.get("Colors", "color_done"))
-COLOR_TITLE   = int(conf.get("Colors", "color_title"))
-COLOR_HINTS   = int(conf.get("Colors", "color_hints"))
-COLOR_PROMTS  = int(conf.get("Colors", "color_promts"))
-COLOR_COMFIRM = int(conf.get("Colors", "color_confirm"))
-
-
-def load_tasks():
-    '''This function reads from the user's appointments file'''
-    try:
-        with open(DATAFILE) as f:
-            pass
-    except IOError:
-        with open(DATAFILE, "w+") as f:
-            pass
-    with open(DATAFILE,"r") as f:
-        apts = csv.reader(f, delimiter = ',')
-        tasks = []
-        statuses = []
-        try:
-            for row in apts:
-                tasks.append(row[0])
-                statuses.append(row[1])
-        except:
-            pass
-    return tasks, statuses
-
-
-def delete_all(stdscr):
-    '''Delete all the tasks'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(False)
-    try:
-        confirmed = True
-        if DELETE_CONFIRMATION:
-            stdscr.addstr(y_max-3, 1, "Really delete all tasks? (y/n) ", color_pair(6))
-            stdscr.refresh()
-            answer = stdscr.getch()
-            confirmed = True if answer == 121 else False
-        if confirmed: 
-            with open(DATAFILE, 'w'):
-                pass        
-    except:
-        pass
-    return
-
-
-def delete(stdscr, tasks, statuses):
-    '''Promt the user which task to delete and change the file'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
-    shift = 3 if SHOW_TITLE else 0
-    for	i in range(len(tasks)):
-        stdscr.addstr(shift+i, 1, str(i+1))
-    delete_promt = "Delete task number: "
-    stdscr.addstr(y_max-3, 1, delete_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(delete_promt)+1, 3)
-    curs_set(False)
-    try:
-        if int(number) > 0 and int(number) <= len(tasks):
-            confirmed = True
-            if DELETE_CONFIRMATION:
-                stdscr.addstr(y_max-3, 1, "Really delete this task? (y/n) ", color_pair(6))
-                stdscr.refresh()
-                answer = stdscr.getch()
-                confirmed = True if answer == 121 else False
-            if confirmed:
-                del tasks[int(number)-1]
-                del statuses[int(number)-1]
-                with open(DATAFILE,"w") as f:
-                    for task, status in zip(tasks, statuses):
-                        f.write(task+","+status+"\n")
-    except:
-        pass
-    return
-
-
-def edit(stdscr, tasks, statuses):
-    '''Promt the user which task to delete and change the file'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
-    shift = 3 if SHOW_TITLE else 0
-    for	i in range(len(tasks)):
-        stdscr.addstr(shift+i, 1, str(i+1))
-    edit_promt = "Edit task number: "
-    stdscr.addstr(y_max-3, 1, edit_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(edit_promt)+1, 3)
-
-    try:
-        if int(number) > 0 and int(number) <= len(tasks):
-            edit_promt = "Enter new task: "
-            stdscr.addstr(y_max-3, 1, edit_promt+" "*(x_max-len(edit_promt)))
-            new_task = stdscr.getstr(y_max - 3, len(edit_promt)+1, x_max - len(edit_promt)).decode(encoding="utf-8")
-            curs_set(False)
-            try:
-                if len(new_task) > 0:
-                    tasks[int(number)-1] = new_task
-                    with open(DATAFILE,"w") as f:
-                        for task, status in zip(tasks, statuses):
-                            f.write(task+","+status+"\n")
-            except:
-                pass
-    except:
-        pass
-    return
-
-
-def mark_as_done(stdscr, tasks, statuses):
-    '''Promts the user to witch task to mark as done and changes the file'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
-    shift = 3 if SHOW_TITLE else 0
-    for	i in range(len(tasks)):
-        stdscr.addstr(shift+i, 1, str(i+1))
-    mark_promt = "Mark as done task number: "
-    stdscr.addstr(y_max-3, 1, mark_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(mark_promt)+1, 3)
-    try:
-        if int(number) > 0 and int(number) <= len(tasks):
-            statuses[int(number)-1] = "done"
-            with open(DATAFILE,"w") as f:
-                for task, status in zip(tasks, statuses):
-                    f.write(task+","+status+"\n")
-    except:
-        pass
-    return
-
-
-def unmark_as_done(stdscr, tasks, statuses):
-    '''Promt the user which task to unmark as done and changes the file'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
-    shift = 3 if SHOW_TITLE else 0
-    for	i in range(len(tasks)):
-        stdscr.addstr(shift+i, 1, str(i+1))
-    mark_promt = "Unmark as done task number: "
-    stdscr.addstr(y_max-3, 1, mark_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(mark_promt)+1, 3)
-    try:
-        if int(number) > 0 and int(number) <= len(tasks):
-            statuses[int(number)-1] = "todo"
-            with open(DATAFILE,"w") as f:
-                for task, status in zip(tasks, statuses):
-                    f.write(task+","+status+"\n")
-    except:
-        pass
-    return
-    
-
-def add_task(stdscr):
-    '''Promt the user to input new task and adds it to the file'''
-    y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
-    try:
-        enter_promt = "Enter new task: "
-        stdscr.addstr(y_max-3, 1, enter_promt, color_pair(5))
-        stdscr.refresh()
-        new_task = stdscr.getstr(y_max - 3, len(enter_promt)+1, x_max - len(enter_promt)).decode(encoding="utf-8")
-        if len(new_task) > 0:
-            with open(DATAFILE,"a") as f:
-                f.write(new_task + ",todo\n")
-    except:
-        pass
-    return
-
-
-def main(stdscr):
-    '''This is the main function that runs the screen'''
-    # locale.setlocale(locale.LC_ALL, '') # This is needed for unicode caracters
-    stdscr = initscr()
-    start_color()
-
-    # Defining colors:
-    use_default_colors()
-    init_pair(1, COLOR_TITLE, -1)
-    init_pair(2, COLOR_TODO, -1)
-    init_pair(3, COLOR_DONE, -1)
-    init_pair(4, COLOR_HINTS, -1)
-    init_pair(5, COLOR_PROMTS, -1)
-    init_pair(6, COLOR_COMFIRM, -1)
-
-    noecho()
-    curs_set(False)
-    y_max, x_max = stdscr.getmaxyx()
-    running = True
-    key = 27
-    done_sign = DONE_ICON
-    todo_sign = TODO_ICON
-    while (running):
-        stdscr.clear()
-        noecho()
-        curs_set(False)
-        tasks, statuses = load_tasks()
-        if SHOW_TITLE:
-            stdscr.addstr(1, 1, TITLE, color_pair(1))
-        shift = 3 if SHOW_TITLE else 0
-
-        # Display the tasks:
-        for index, task in enumerate(tasks):
-            if statuses[index] == "done":
-                stdscr.addstr(index+shift,1,done_sign.encode('UTF-8'), color_pair(3)) 
-                stdscr.addstr(index+shift,3,str(task), color_pair(3)) 
-            else: 
-                stdscr.addstr(index+shift,1,todo_sign.encode('UTF-8'), color_pair(2)) 
-                stdscr.addstr(index+shift,3,str(task), color_pair(2))
-
-	# Display the hints
-        if SHOW_KEYBINDINGS:
-            stdscr.addstr(y_max - 1, 0, HINT[:x_max-1], color_pair(4))
-        # stdscr.addstr(y_max - 2, 0, "You pressed"+str(key))
-        stdscr.refresh()
-
-        # Getting user's input
-        key = stdscr.getch()
-
-        # Handle screen resize
-        if key == KEY_RESIZE:
-            y_max, x_max = stdscr.getmaxyx()
-            stdscr.clear()
-            stdscr.refresh()
-
-        # Handle various keys
-        if key == 113: running = False		                # "q" for quit
-        if key == 68 : delete_all(stdscr)			# "D" for delete all tasks 
-        if key == 97 : add_task(stdscr)			        # "a" for add event
-        if key == 118: mark_as_done(stdscr, tasks, statuses)    # "v" for done
-        if key == 117: unmark_as_done(stdscr, tasks, statuses)  # "u" for unmark
-        if key == 100: delete(stdscr, tasks, statuses)	        # "d" for delete
-        if key == 101: edit(stdscr, tasks, statuses)	        # "e" for edit
+        if key == 63: show_hints = not show_hints                   # "?" for toggle hint
 
     echo()
     curs_set(True)
