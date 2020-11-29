@@ -14,7 +14,9 @@ Then, run by just typing `mintodo` in a linux terminal.
 
 `v` - mark task as done
 
-`u` - unmark tast as done
+`i` - mark task as important
+
+`u` - unmark task
 
 `e` - edit task
 
@@ -47,6 +49,7 @@ color_title = 1
 color_hints = 7
 color_promts = 7
 color_confirm = 1
+color_important = 1
 ```
 When configuring colors, numbers mean: 1 - red, 2 - green, 3 - yellow, 4 - blue, 5 - magenta, 6 - cyan, 7 - white
 
