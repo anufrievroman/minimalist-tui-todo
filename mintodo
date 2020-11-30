@@ -19,17 +19,17 @@ conf = ConfigParser()
 def create_config():
     '''Create config file if it does not exist yet'''
     conf["Parameters"] = {
-        "hint": "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit",
-        "folder_with_datafile": str(config_folder),
-        "calcurse_data_file": str(calcurse_file),
+        "datafile": str(config_folder)+"/tasks.csv",
+        "calcurse_datafile": str(calcurse_file),
         "show_keybindings": "Yes",
         "use_unicode_icons": "Yes",
-        "delete_confirmation": "No",
+        "ask_confirmations": "No",
         "done_icon": "✔",
         "todo_icon": "•",
         "important_icon": "‣",
         "show_header": "Yes",
         "header": "TODO LIST:",
+        "hint": "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit",
         }
 
     conf["Colors"] = {
@@ -49,12 +49,13 @@ if not os.path.exists(config_file):
 conf.read(config_file)
 
 try:
-    CALCURSE_FILE       = conf.get("Parameters", "calcurse_data_file")
+    DATAFILE            = conf.get("Parameters", "datafile")
+    CALCURSE_FILE       = conf.get("Parameters", "calcurse_datafile")
     TITLE               = conf.get("Parameters", "header")
     HINT                = conf.get("Parameters", "hint")
     SHOW_TITLE          = conf.getboolean("Parameters", "show_header")
     SHOW_KEYBINDINGS    = conf.getboolean("Parameters", "show_keybindings")
-    DELETE_CONFIRMATION = conf.getboolean("Parameters", "delete_confirmation")
+    ASK_CONFIRMATIONS = conf.getboolean("Parameters", "ask_confirmations")
     USE_ICONS           = conf.getboolean("Parameters", "use_unicode_icons")
 
     if USE_ICONS:
@@ -73,15 +74,13 @@ try:
     COLOR_PROMTS    = int(conf.get("Colors", "color_promts"))
     COLOR_COMFIRM   = int(conf.get("Colors", "color_confirm"))
     COLOR_IMPORTANT = int(conf.get("Colors", "color_important"))
-    data_folder = conf.get("Parameters", "folder_with_datafile") 
 except:
     print("Error in the config.ini file. Try removing the config file and run the program again.")
     exit()
 
-DATAFILE = data_folder + "/tasks.csv"
 
 def load_tasks():
-    '''This function reads from the user's appointments file'''
+    '''Reads from the user's appointments file'''
     try:
         with open(DATAFILE) as f:
             pass
@@ -101,18 +100,27 @@ def load_tasks():
     return tasks, statuses
 
 
+def add_task(stdscr):
+    '''Promt the user to input new task and adds it to the file'''
+    y_max, x_max = stdscr.getmaxyx()
+    try:
+        prompt_string = "Enter new task: "
+        new_task = user_input(stdscr, prompt_string, x_max-len(prompt_string))
+        if len(new_task) > 0:
+            with open(DATAFILE,"a") as f:
+                f.write(new_task + ",todo\n")
+    except:
+        pass 
+
+
 def delete_all(stdscr):
     '''Delete all the tasks'''
     y_max, x_max = stdscr.getmaxyx()
     echo() 
     curs_set(False)
     try:
-        confirmed = True
-        if DELETE_CONFIRMATION:
-            stdscr.addstr(y_max-3, 1, "Really delete all tasks? (y/n) ", color_pair(6))
-            stdscr.refresh()
-            answer = stdscr.getch()
-            confirmed = True if answer == 121 else False
+        prompt_string = "Really delete all tasks? (y/n) "
+        confirmed = ask_confirmation(stdscr, prompt_string)
         if confirmed: 
             with open(DATAFILE, 'w'):
                 pass        
@@ -124,10 +132,8 @@ def calcurse_export(stdscr):
     '''Import todo events from calcurse database'''
     y_max, _ = stdscr.getmaxyx()
     try:
-        stdscr.addstr(y_max-3, 1, "Import tasks from calcurse? (y/n) ", color_pair(6))
-        stdscr.refresh()
-        answer = stdscr.getkey()
-        confirmed = True if answer == "y" else False
+        prompt_string = "Import tasks from calcurse? (y/n) "
+        confirmed = ask_confirmation(stdscr, prompt_string)
         if confirmed: 
             with open(CALCURSE_FILE, 'r') as f:
                 for task in f.readlines():
@@ -144,12 +150,8 @@ def mark_all_as_done(stdscr, tasks):
     echo() 
     curs_set(False)
     try:
-        confirmed = True
-        if DELETE_CONFIRMATION:
-            stdscr.addstr(y_max-3, 1, "Really mark all tasks as done? (y/n) ", color_pair(6))
-            stdscr.refresh()
-            answer = stdscr.getch()
-            confirmed = True if answer == 121 else False
+        prompt_string = "Really mark all tasks as done? (y/n) "
+        confirmed = ask_confirmation(stdscr, prompt_string)
         if confirmed: 
             with open(DATAFILE, "w") as f:
                 for task in tasks:
@@ -164,12 +166,8 @@ def mark_all_as_important(stdscr, tasks):
     echo() 
     curs_set(False)
     try:
-        confirmed = True
-        if DELETE_CONFIRMATION:
-            stdscr.addstr(y_max-3, 1, "Really mark all tasks as important? (y/n) ", color_pair(6))
-            stdscr.refresh()
-            answer = stdscr.getch()
-            confirmed = True if answer == 121 else False
+        prompt_string = "Really mark all tasks as important? (y/n) "
+        confirmed = ask_confirmation(stdscr, prompt_string)
         if confirmed: 
             with open(DATAFILE, "w") as f:
                 for task in tasks:
@@ -184,12 +182,8 @@ def unmark_all(stdscr, tasks):
     echo() 
     curs_set(False)
     try:
-        confirmed = True
-        if DELETE_CONFIRMATION:
-            stdscr.addstr(y_max-3, 1, "Really unmark all the tasks? (y/n) ", color_pair(6))
-            stdscr.refresh()
-            answer = stdscr.getch()
-            confirmed = True if answer == 121 else False
+        prompt_string = "Really unmark all tasks? (y/n) "
+        confirmed = ask_confirmation(stdscr, prompt_string)
         if confirmed: 
             with open(DATAFILE, "w") as f:
                 for task in tasks:
@@ -201,24 +195,15 @@ def unmark_all(stdscr, tasks):
 def delete(stdscr, tasks, statuses):
     '''Promt the user which task to delete and change the file'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
     shift = 3 if SHOW_TITLE else 0
     for	i in range(len(tasks)):
         stdscr.addstr(shift+i, 1, str(i+1))
-    delete_promt = "Delete task number: "
-    stdscr.addstr(y_max-3, 1, delete_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(delete_promt)+1, 3)
-    curs_set(False)
+    prompt_string = "Delete task number: "
+    number = user_input(stdscr, prompt_string, 4)
     try:
         if int(number) > 0 and int(number) <= len(tasks):
-            confirmed = True
-            if DELETE_CONFIRMATION:
-                stdscr.addstr(y_max-3, 1, "Really delete this task? (y/n) ", color_pair(6))
-                stdscr.refresh()
-                answer = stdscr.getch()
-                confirmed = True if answer == 121 else False
+            prompt_string = "Really delete this task? (y/n) "
+            confirmed = ask_confirmation(stdscr, prompt_string)
             if confirmed:
                 del tasks[int(number)-1]
                 del statuses[int(number)-1]
@@ -227,28 +212,21 @@ def delete(stdscr, tasks, statuses):
                         f.write(task+","+status+"\n")
     except:
         pass
-    return
 
 
 def edit(stdscr, tasks, statuses):
     '''Promt the user which task to delete and change the file'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
     shift = 3 if SHOW_TITLE else 0
     for	i in range(len(tasks)):
         stdscr.addstr(shift+i, 1, str(i+1))
-    edit_promt = "Edit task number: "
-    stdscr.addstr(y_max-3, 1, edit_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(edit_promt)+1, 3)
+    prompt_string = "Edit task number: "
+    number = user_input(stdscr, prompt_string, 4)
 
     try:
         if int(number) > 0 and int(number) <= len(tasks):
-            edit_promt = "Enter new task: "
-            stdscr.addstr(y_max-3, 1, edit_promt+" "*(x_max-len(edit_promt)))
-            new_task = stdscr.getstr(y_max - 3, len(edit_promt)+1, x_max - len(edit_promt)).decode(encoding="utf-8")
-            curs_set(False)
+            prompt_string = "Enter new task: "
+            new_task = user_input(stdscr, prompt_string, x_max-len(prompt_string))
             try:
                 if len(new_task) > 0:
                     tasks[int(number)-1] = new_task
@@ -259,21 +237,16 @@ def edit(stdscr, tasks, statuses):
                 pass
     except:
         pass
-    return
 
 
 def mark_as_done(stdscr, tasks, statuses):
     '''Promts the user to witch task to mark as done and changes the file'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
     shift = 3 if SHOW_TITLE else 0
     for	i in range(len(tasks)):
         stdscr.addstr(shift+i, 1, str(i+1))
-    mark_promt = "Mark as done task number: "
-    stdscr.addstr(y_max-3, 1, mark_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(mark_promt)+1, 3)
+    prompt_string = "Mark as done task number: "
+    number = user_input(stdscr, prompt_string, 4)
     try:
         if int(number) > 0 and int(number) <= len(tasks):
             statuses[int(number)-1] = "done"
@@ -282,21 +255,16 @@ def mark_as_done(stdscr, tasks, statuses):
                     f.write(task+","+status+"\n")
     except:
         pass
-    return
 
 
 def mark_as_important(stdscr, tasks, statuses):
     '''Promts the user to witch task to mark as done and changes the file'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
     shift = 3 if SHOW_TITLE else 0
     for	i in range(len(tasks)):
         stdscr.addstr(shift+i, 1, str(i+1))
-    mark_promt = "Mark as important task number: "
-    stdscr.addstr(y_max-3, 1, mark_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(mark_promt)+1, 3)
+    prompt_string = "Mark as important task number: "
+    number = user_input(stdscr, prompt_string, 4)
     try:
         if int(number) > 0 and int(number) <= len(tasks):
             statuses[int(number)-1] = "important"
@@ -305,21 +273,16 @@ def mark_as_important(stdscr, tasks, statuses):
                     f.write(task+","+status+"\n")
     except:
         pass
-    return
 
 
 def unmark(stdscr, tasks, statuses):
-    '''Promt the user which task to unmark as done and changes the file'''
+    '''Promt the user which task to unmark as done and rewrites the file'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
-    curs_set(True)
     shift = 3 if SHOW_TITLE else 0
     for	i in range(len(tasks)):
         stdscr.addstr(shift+i, 1, str(i+1))
-    mark_promt = "Unmark as done task number: "
-    stdscr.addstr(y_max-3, 1, mark_promt, color_pair(5))
-    stdscr.refresh()
-    number = stdscr.getstr(y_max - 3, len(mark_promt)+1, 3)
+    prompt_string = "Unmark task number: "
+    number = user_input(stdscr, prompt_string, 4)
     try:
         if int(number) > 0 and int(number) <= len(tasks):
             statuses[int(number)-1] = "todo"
@@ -328,25 +291,33 @@ def unmark(stdscr, tasks, statuses):
                     f.write(task+","+status+"\n")
     except:
         pass
-    return
     
 
-def add_task(stdscr):
-    '''Promt the user to input new task and adds it to the file'''
+def ask_confirmation(stdscr, prompt_string):
+    '''Ask user confirmation for an action'''
+    y_max, x_max = stdscr.getmaxyx()
+    if ASK_CONFIRMATIONS:
+        prompt = prompt_string+" "*(x_max-len(prompt_string), color_pair(6))
+        stdscr.addstr(y_max-3, 0, prompt_string[:x_max-1])
+        key = stdscr.getkey()
+        confirmed = True if key == "y" else False
+    else:
+        confirmed = True
+    return confirmed
+
+
+def user_input(stdscr, prompt_string, answer_length):
+    '''Ask user to input something and return this string'''
     y_max, x_max = stdscr.getmaxyx()
     echo() 
     curs_set(True)
-    try:
-        enter_promt = "Enter new task: "
-        stdscr.addstr(y_max-3, 1, enter_promt, color_pair(5))
-        stdscr.refresh()
-        new_task = stdscr.getstr(y_max - 3, len(enter_promt)+1, x_max - len(enter_promt)).decode(encoding="utf-8")
-        if len(new_task) > 0:
-            with open(DATAFILE,"a") as f:
-                f.write(new_task + ",todo\n")
-    except:
-        pass
-    return
+    display_string = str(prompt_string) + " "*abs((x_max-len(prompt_string))-1) 
+    stdscr.addstr(y_max - 3, 0, display_string[:x_max-1], color_pair(5))
+    stdscr.refresh()
+    user_input = stdscr.getstr(y_max - 3, len(prompt_string), answer_length).decode(encoding="utf-8")
+    noecho() 
+    curs_set(False)
+    return user_input
 
 
 def main(stdscr):
@@ -409,7 +380,11 @@ def main(stdscr):
                 stdscr.refresh()
 
             # Handle various keys
-            if key == "q": running = False
+            if key == "q": 
+                prompt_string = "Really exit? (y/n) "
+                confirmed = ask_confirmation(stdscr, prompt_string)
+                running = False if confirmed else True
+
             if key == "D": delete_all(stdscr)
             if key == "a": add_task(stdscr)
             if key == "v": mark_as_done(stdscr, tasks, statuses)
