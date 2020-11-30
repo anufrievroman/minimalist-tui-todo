@@ -11,15 +11,17 @@ from configparser import ConfigParser
 config_folder = str(Path.home())+"/.config/mintodo"
 if not os.path.exists(config_folder):
     os.makedirs(config_folder)
-DATAFILE = str(config_folder) + "/tasks.csv"
 
 config_file = str(Path.home()) + "/.config/mintodo/config.ini"
+calcurse_file = str(Path.home()) + "/.local/share/calcurse/todo"
 conf = ConfigParser()
 
 def create_config():
     '''Create config file if it does not exist yet'''
     conf["Parameters"] = {
         "hint": "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit",
+        "folder_with_datafile": str(config_folder),
+        "calcurse_data_file": str(calcurse_file),
         "show_keybindings": "Yes",
         "use_unicode_icons": "Yes",
         "delete_confirmation": "No",
@@ -47,6 +49,7 @@ if not os.path.exists(config_file):
 conf.read(config_file)
 
 try:
+    CALCURSE_FILE       = conf.get("Parameters", "calcurse_data_file")
     TITLE               = conf.get("Parameters", "header")
     HINT                = conf.get("Parameters", "hint")
     SHOW_TITLE          = conf.getboolean("Parameters", "show_header")
@@ -70,10 +73,12 @@ try:
     COLOR_PROMTS    = int(conf.get("Colors", "color_promts"))
     COLOR_COMFIRM   = int(conf.get("Colors", "color_confirm"))
     COLOR_IMPORTANT = int(conf.get("Colors", "color_important"))
+    data_folder = conf.get("Parameters", "folder_with_datafile") 
 except:
     print("Error in the config.ini file. Try removing the config file and run the program again.")
     exit()
 
+DATAFILE = data_folder + "/tasks.csv"
 
 def load_tasks():
     '''This function reads from the user's appointments file'''
@@ -111,6 +116,24 @@ def delete_all(stdscr):
         if confirmed: 
             with open(DATAFILE, 'w'):
                 pass        
+    except:
+        pass
+
+
+def calcurse_export(stdscr):
+    '''Import todo events from calcurse database'''
+    y_max, _ = stdscr.getmaxyx()
+    try:
+        stdscr.addstr(y_max-3, 1, "Import tasks from calcurse? (y/n) ", color_pair(6))
+        stdscr.refresh()
+        answer = stdscr.getkey()
+        confirmed = True if answer == "y" else False
+        if confirmed: 
+            with open(CALCURSE_FILE, 'r') as f:
+                for task in f.readlines():
+                    if len(task) > 0:
+                        with open(DATAFILE,"a") as f:
+                            f.write(task[4:-1] + ",todo\n")
     except:
         pass
 
@@ -380,24 +403,25 @@ def main(stdscr):
             key = stdscr.getkey()
 
             # Handle screen resize
-            if key == KEY_RESIZE:
+            if key == "KEY_RESIZE":
                 y_max, x_max = stdscr.getmaxyx()
                 stdscr.clear()
                 stdscr.refresh()
 
             # Handle various keys
             if key == "q": running = False
-            if key == "D":  delete_all(stdscr)
-            if key == "a":  add_task(stdscr)
-            if key == "v": mark_as_done(stdscr, tasks, statuses) 
-            if key == "V":  mark_all_as_done(stdscr, tasks) 
+            if key == "D": delete_all(stdscr)
+            if key == "a": add_task(stdscr)
+            if key == "v": mark_as_done(stdscr, tasks, statuses)
+            if key == "V": mark_all_as_done(stdscr, tasks)
             if key == "i": mark_as_important(stdscr, tasks, statuses)
-            if key == "I":  mark_all_as_important(stdscr, tasks)
+            if key == "I": mark_all_as_important(stdscr, tasks)
             if key == "u": unmark(stdscr, tasks, statuses)
-            if key == "U":  unmark_all(stdscr, tasks)
+            if key == "U": unmark_all(stdscr, tasks)
+            if key == "x": calcurse_export(stdscr)
+            if key == "?": show_hints = not show_hints
             if key == "d": delete(stdscr, tasks, statuses)
-            if key == "e": edit(stdscr, tasks, statuses)
-            if key == "?":  show_hints = not show_hints
+            if key in ["e", "c"]: edit(stdscr, tasks, statuses)
         except KeyboardInterrupt:
             running = False
 

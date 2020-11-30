@@ -1,7 +1,14 @@
 # Minimalist TUI Todo
-Minimal todo list with simple and customizable UI in linux terminal.
+Minimal todo list with simple and customizable UI in Linux terminal.
 
 ![screenshot](screenshot.jpeg)
+
+## Features
+
+- Minimal and customizable interface
+- Fast task management with least possible key presses
+- Import tasks from calcurse
+
 
 ## Instalation and running
 Simply copy the _mintodo_ file into a directory with your binaries, for example into `home/user/.local/bin` 
@@ -18,19 +25,21 @@ Then, run by just typing `mintodo` in a linux terminal.
 
 `i` - mark task as important
 
-`i` - mark al tasks as important
+`i` - mark all tasks as important
 
 `u` - unmark task
 
 `U` - unmark all tasks
 
-`e` - edit task
+`e`,`c` - edit task
 
 `d` - delete task
 
 `D` - delete all tasks
 
-`?` - toggle footer
+`x` - import tasks from calcurse
+
+`?` - toggle help
 
 `q` - quit
 
@@ -41,8 +50,9 @@ On the first run, it will create a configuration file at `home/user/.config/mint
 You can edit parameters and colors in the `config.ini` file. Here is an example config:
 
 ```
-[Parameters]
 hint = a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit
+folder_with_datafile = /home/r/.config/mintodo
+calcurse_data_file = /home/r/.local/share/calcurse/todo
 show_keybindings = Yes
 use_unicode_icons = Yes
 delete_confirmation = No
