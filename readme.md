@@ -14,9 +14,15 @@ Then, run by just typing `mintodo` in a linux terminal.
 
 `v` - mark task as done
 
+`V` - mark all tasks as done
+
 `i` - mark task as important
 
+`i` - mark al tasks as important
+
 `u` - unmark task
+
+`U` - unmark all tasks
 
 `e` - edit task
 
@@ -36,12 +42,14 @@ You can edit parameters and colors in the `config.ini` file. Here is an example 
 
 ```
 [Parameters]
-hint = a - add new • v - mark as done • u - unmark • d - delete • e - edit • D - delete all • q - quit
+hint = a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit
 show_keybindings = Yes
+use_unicode_icons = Yes
 delete_confirmation = No
 done_icon = ✔
 todo_icon = •
-show_title = Yes
+important_icon = ‣
+show_header = Yes
 header = TODO LIST:
 
 [Colors]
