@@ -19,7 +19,7 @@ conf = ConfigParser()
 def create_config():
     '''Create config file if it does not exist yet'''
     conf["Parameters"] = {
-        "hint": "a: add new · v: mark as done · i: mark as important · u: unmark · e: edit · d: delete · D: delete all · ?: toggle hints · q: quit",
+        "hint": "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit",
         "show_keybindings": "Yes",
         "use_unicode_icons": "Yes",
         "delete_confirmation": "No",
@@ -113,7 +113,66 @@ def delete_all(stdscr):
                 pass        
     except:
         pass
-    return
+
+
+def mark_all_as_done(stdscr, tasks):
+    '''Mark all the tasks as done'''
+    y_max, x_max = stdscr.getmaxyx()
+    echo() 
+    curs_set(False)
+    try:
+        confirmed = True
+        if DELETE_CONFIRMATION:
+            stdscr.addstr(y_max-3, 1, "Really mark all tasks as done? (y/n) ", color_pair(6))
+            stdscr.refresh()
+            answer = stdscr.getch()
+            confirmed = True if answer == 121 else False
+        if confirmed: 
+            with open(DATAFILE, "w") as f:
+                for task in tasks:
+                    f.write(task + ",done\n")
+    except:
+        pass
+
+
+def mark_all_as_important(stdscr, tasks):
+    '''Mark all the tasks as important'''
+    y_max, x_max = stdscr.getmaxyx()
+    echo() 
+    curs_set(False)
+    try:
+        confirmed = True
+        if DELETE_CONFIRMATION:
+            stdscr.addstr(y_max-3, 1, "Really mark all tasks as important? (y/n) ", color_pair(6))
+            stdscr.refresh()
+            answer = stdscr.getch()
+            confirmed = True if answer == 121 else False
+        if confirmed: 
+            with open(DATAFILE, "w") as f:
+                for task in tasks:
+                    f.write(task + ",important\n")
+    except:
+        pass
+
+
+def unmark_all(stdscr, tasks):
+    '''Unmark all the tasks'''
+    y_max, x_max = stdscr.getmaxyx()
+    echo() 
+    curs_set(False)
+    try:
+        confirmed = True
+        if DELETE_CONFIRMATION:
+            stdscr.addstr(y_max-3, 1, "Really unmark all the tasks? (y/n) ", color_pair(6))
+            stdscr.refresh()
+            answer = stdscr.getch()
+            confirmed = True if answer == 121 else False
+        if confirmed: 
+            with open(DATAFILE, "w") as f:
+                for task in tasks:
+                    f.write(task + ",todo\n")
+    except:
+        pass
 
 
 def delete(stdscr, tasks, statuses):
@@ -317,24 +376,30 @@ def main(stdscr):
         stdscr.refresh()
 
         # Getting user's input
-        key = stdscr.getch()
+        try:
+            key = stdscr.getkey()
 
-        # Handle screen resize
-        if key == KEY_RESIZE:
-            y_max, x_max = stdscr.getmaxyx()
-            stdscr.clear()
-            stdscr.refresh()
+            # Handle screen resize
+            if key == KEY_RESIZE:
+                y_max, x_max = stdscr.getmaxyx()
+                stdscr.clear()
+                stdscr.refresh()
 
-        # Handle various keys
-        if key == 113: running = False		                    # "q" for quit
-        if key == 68 : delete_all(stdscr)		            # "D" for delete all tasks 
-        if key == 97 : add_task(stdscr)			            # "a" for add event
-        if key == 118: mark_as_done(stdscr, tasks, statuses)        # "v" for mark as done
-        if key == 105: mark_as_important(stdscr, tasks, statuses)   # "i" for mark as important
-        if key == 117: unmark(stdscr, tasks, statuses)              # "u" for unmark
-        if key == 100: delete(stdscr, tasks, statuses)	            # "d" for delete
-        if key == 101: edit(stdscr, tasks, statuses)	            # "e" for edit
-        if key == 63: show_hints = not show_hints                   # "?" for toggle hint
+            # Handle various keys
+            if key == "q": running = False
+            if key == "D":  delete_all(stdscr)
+            if key == "a":  add_task(stdscr)
+            if key == "v": mark_as_done(stdscr, tasks, statuses) 
+            if key == "V":  mark_all_as_done(stdscr, tasks) 
+            if key == "i": mark_as_important(stdscr, tasks, statuses)
+            if key == "I":  mark_all_as_important(stdscr, tasks)
+            if key == "u": unmark(stdscr, tasks, statuses)
+            if key == "U":  unmark_all(stdscr, tasks)
+            if key == "d": delete(stdscr, tasks, statuses)
+            if key == "e": edit(stdscr, tasks, statuses)
+            if key == "?":  show_hints = not show_hints
+        except KeyboardInterrupt:
+            running = False
 
     echo()
     curs_set(True)
