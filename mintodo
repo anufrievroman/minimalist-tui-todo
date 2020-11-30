@@ -346,27 +346,31 @@ def main(stdscr):
         noecho()
         curs_set(False)
         tasks, statuses = load_tasks()
-        if SHOW_TITLE:
-            stdscr.addstr(1, 1, TITLE, color_pair(1))
-        shift = 3 if SHOW_TITLE else 0
+        try:
+            # Display the header
+            if SHOW_TITLE:
+                stdscr.addstr(1, 1, TITLE[:x_max-3], color_pair(1))
+            shift = 3 if SHOW_TITLE else 0
 
-        # Display the tasks:
-        for index, task in enumerate(tasks):
-            if statuses[index] == "done":
-                stdscr.addstr(index+shift,1,DONE_ICON.encode('UTF-8'), color_pair(3)) 
-                stdscr.addstr(index+shift,3,str(task), color_pair(3)) 
-            elif statuses[index] == "important":
-                stdscr.addstr(index+shift,1,IMPORTANT_ICON.encode('UTF-8'), color_pair(7)) 
-                stdscr.addstr(index+shift,3,str(task), color_pair(7)) 
-            else: 
-                stdscr.addstr(index+shift,1,TODO_ICON.encode('UTF-8'), color_pair(2)) 
-                stdscr.addstr(index+shift,3,str(task), color_pair(2))
+            # Display the tasks:
+            for index, task in enumerate(tasks):
+                task = task[:x_max-3]
+                if statuses[index] == "done":
+                    stdscr.addstr(index+shift,1,DONE_ICON.encode('UTF-8'), color_pair(3)) 
+                    stdscr.addstr(index+shift,3, task, color_pair(3)) 
+                elif statuses[index] == "important":
+                    stdscr.addstr(index+shift,1,IMPORTANT_ICON.encode('UTF-8'), color_pair(7)) 
+                    stdscr.addstr(index+shift,3, task, color_pair(7)) 
+                else: 
+                    stdscr.addstr(index+shift,1,TODO_ICON.encode('UTF-8'), color_pair(2)) 
+                    stdscr.addstr(index+shift,3, task, color_pair(2))
 
-	# Display the hints
-        if show_hints:
-            stdscr.addstr(y_max - 1, 1, HINT[:x_max-2], color_pair(4))
+            # Display the hints
+            if show_hints:
+                stdscr.addstr(y_max - 1, 1, HINT[:x_max-2], color_pair(4))
+        except:
+            pass
 
-        # stdscr.addstr(y_max - 2, 0, "You pressed"+str(key))
         stdscr.refresh()
 
         # Getting user's input
