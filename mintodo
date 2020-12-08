@@ -104,11 +104,11 @@ def add_task(stdscr):
     '''Promt the user to input new task and adds it to the file'''
     y_max, x_max = stdscr.getmaxyx()
     try:
-        prompt_string = "Enter new task: "
-        new_task = user_input(stdscr, prompt_string, x_max-len(prompt_string))
+        prompt_string = "New task: "
+        new_task = user_input(stdscr, prompt_string, x_max - 1)
         if len(new_task) > 0:
             with open(DATAFILE,"a") as f:
-                f.write(new_task + ",todo\n")
+                f.write('"'+new_task+'"' + ",todo\n")
     except:
         pass 
 
@@ -139,7 +139,7 @@ def calcurse_export(stdscr):
                 for task in f.readlines():
                     if len(task) > 0:
                         with open(DATAFILE,"a") as f:
-                            f.write(task[4:-1] + ",todo\n")
+                            f.write('"'+task[4:-1]+'"' + ",todo\n")
     except:
         pass
 
@@ -225,14 +225,14 @@ def edit(stdscr, tasks, statuses):
 
     try:
         if int(number) > 0 and int(number) <= len(tasks):
-            prompt_string = "Enter new task: "
-            new_task = user_input(stdscr, prompt_string, x_max-len(prompt_string))
+            prompt_string = "New task: "
+            new_task = user_input(stdscr, prompt_string, x_max - 1)
             try:
                 if len(new_task) > 0:
                     tasks[int(number)-1] = new_task
                     with open(DATAFILE,"w") as f:
                         for task, status in zip(tasks, statuses):
-                            f.write(task+","+status+"\n")
+                            f.write('"'+task+'",'+status+'\n')
             except:
                 pass
     except:
@@ -298,7 +298,7 @@ def ask_confirmation(stdscr, prompt_string):
     y_max, x_max = stdscr.getmaxyx()
     if ASK_CONFIRMATIONS:
         prompt = prompt_string+" "*(x_max-len(prompt_string), color_pair(6))
-        stdscr.addstr(y_max-3, 0, prompt_string[:x_max-1])
+        stdscr.addstr(y_max - 3, 0, prompt_string[:x_max-1])
         key = stdscr.getkey()
         confirmed = True if key == "y" else False
     else:
@@ -314,7 +314,9 @@ def user_input(stdscr, prompt_string, answer_length):
     display_string = str(prompt_string) + " "*abs((x_max-len(prompt_string))-1) 
     stdscr.addstr(y_max - 3, 0, display_string[:x_max-1], color_pair(5))
     stdscr.refresh()
-    user_input = stdscr.getstr(y_max - 3, len(prompt_string), answer_length).decode(encoding="utf-8")
+    line = 2 if (x_max < 25 and answer_length > 4) else 3
+    shift = 0 if (x_max < 25 and answer_length > 4) else len(prompt_string)
+    user_input = stdscr.getstr(y_max - line, shift, answer_length).decode(encoding="utf-8")
     noecho() 
     curs_set(False)
     return user_input
@@ -322,7 +324,6 @@ def user_input(stdscr, prompt_string, answer_length):
 
 def main(stdscr):
     '''This is the main function that runs the screen'''
-    # locale.setlocale(locale.LC_ALL, '') # This is needed for unicode caracters
     stdscr = initscr()
     start_color()
 
@@ -356,13 +357,13 @@ def main(stdscr):
             for index, task in enumerate(tasks):
                 task = task[:x_max-3]
                 if statuses[index] == "done":
-                    stdscr.addstr(index+shift,1,DONE_ICON.encode('UTF-8'), color_pair(3)) 
+                    stdscr.addstr(index+shift,1,DONE_ICON, color_pair(3)) 
                     stdscr.addstr(index+shift,3, task, color_pair(3)) 
                 elif statuses[index] == "important":
-                    stdscr.addstr(index+shift,1,IMPORTANT_ICON.encode('UTF-8'), color_pair(7)) 
+                    stdscr.addstr(index+shift,1,IMPORTANT_ICON, color_pair(7)) 
                     stdscr.addstr(index+shift,3, task, color_pair(7)) 
                 else: 
-                    stdscr.addstr(index+shift,1,TODO_ICON.encode('UTF-8'), color_pair(2)) 
+                    stdscr.addstr(index+shift,1,TODO_ICON, color_pair(2)) 
                     stdscr.addstr(index+shift,3, task, color_pair(2))
 
             # Display the hints
@@ -388,7 +389,6 @@ def main(stdscr):
                 prompt_string = "Really exit? (y/n) "
                 confirmed = ask_confirmation(stdscr, prompt_string)
                 running = False if confirmed else True
-
             if key == "D": delete_all(stdscr)
             if key == "a": add_task(stdscr)
             if key == "v": mark_as_done(stdscr, tasks, statuses)
@@ -408,6 +408,7 @@ def main(stdscr):
     curs_set(True)
     endwin()
     return
+
 
 if __name__ == "__main__":
     wrapper(main)
