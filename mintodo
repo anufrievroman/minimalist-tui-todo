@@ -13,9 +13,11 @@ if not os.path.exists(config_folder):
     os.makedirs(config_folder)
 
 config_file = str(Path.home()) + "/.config/mintodo/config.ini"
+
 calcurse_file = str(Path.home()) + "/.local/share/calcurse/todo"
 conf = ConfigParser()
 
+default_hint = "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit"
 def create_config():
     '''Create config file if it does not exist yet'''
     conf["Parameters"] = {
@@ -29,7 +31,7 @@ def create_config():
         "important_icon": "‣",
         "show_header": "Yes",
         "header": "TODO LIST:",
-        "hint": "a: Add · v (V): Done (all) · i (I): Important (all) · u (U): Unmark (all) · e: Edit · d (D): Delete (all) · ?: Help · q: Quit",
+        "hint": default_hint,
         }
 
     conf["Colors"] = {
@@ -49,31 +51,31 @@ if not os.path.exists(config_file):
 conf.read(config_file)
 
 try:
-    DATAFILE            = conf.get("Parameters", "datafile")
-    CALCURSE_FILE       = conf.get("Parameters", "calcurse_datafile")
-    TITLE               = conf.get("Parameters", "header")
-    HINT                = conf.get("Parameters", "hint")
-    SHOW_TITLE          = conf.getboolean("Parameters", "show_header")
-    SHOW_KEYBINDINGS    = conf.getboolean("Parameters", "show_keybindings")
-    ASK_CONFIRMATIONS = conf.getboolean("Parameters", "ask_confirmations")
-    USE_ICONS           = conf.getboolean("Parameters", "use_unicode_icons")
+    DATAFILE          = conf.get("Parameters", "datafile", fallback=str(config_folder)+"/tasks.csv")
+    CALCURSE_FILE     = conf.get("Parameters", "calcurse_datafile", fallback=calcurse_file)
+    TITLE             = conf.get("Parameters", "header", fallback="TODO LIST:")
+    HINT              = conf.get("Parameters", "hint", fallback=default_hint)
+    SHOW_TITLE        = conf.getboolean("Parameters", "show_header", fallback=True)
+    SHOW_KEYBINDINGS  = conf.getboolean("Parameters", "show_keybindings", fallback=True)
+    ASK_CONFIRMATIONS = conf.getboolean("Parameters", "ask_confirmations", fallback=False)
+    USE_ICONS         = conf.getboolean("Parameters", "use_unicode_icons", fallback=True)
 
     if USE_ICONS:
-        DONE_ICON           = conf.get("Parameters", "done_icon")
-        TODO_ICON           = conf.get("Parameters", "todo_icon")
-        IMPORTANT_ICON      = conf.get("Parameters", "important_icon")
+        DONE_ICON      = conf.get("Parameters", "done_icon", fallback="✔")
+        TODO_ICON      = conf.get("Parameters", "todo_icon", fallback="•")
+        IMPORTANT_ICON = conf.get("Parameters", "important_icon", fallback="‣")
     else:
-        DONE_ICON           = "×"
-        TODO_ICON           = "·"
-        IMPORTANT_ICON      = "!"
+        DONE_ICON      = "×"
+        TODO_ICON      = "·"
+        IMPORTANT_ICON = "!"
 
-    COLOR_TODO      = int(conf.get("Colors", "color_todo"))
-    COLOR_DONE      = int(conf.get("Colors", "color_done"))
-    COLOR_TITLE     = int(conf.get("Colors", "color_title"))
-    COLOR_HINTS     = int(conf.get("Colors", "color_hints"))
-    COLOR_PROMTS    = int(conf.get("Colors", "color_promts"))
-    COLOR_COMFIRM   = int(conf.get("Colors", "color_confirm"))
-    COLOR_IMPORTANT = int(conf.get("Colors", "color_important"))
+    COLOR_TODO      = int(conf.get("Colors", "color_todo", fallback=7))
+    COLOR_DONE      = int(conf.get("Colors", "color_done", fallback=6))
+    COLOR_TITLE     = int(conf.get("Colors", "color_title", fallback=1))
+    COLOR_HINTS     = int(conf.get("Colors", "color_hints", fallback=7))
+    COLOR_PROMTS    = int(conf.get("Colors", "color_promts", fallback=7))
+    COLOR_COMFIRM   = int(conf.get("Colors", "color_confirm", fallback=1))
+    COLOR_IMPORTANT = int(conf.get("Colors", "color_important", fallback=1))
 except:
     print("Error in the config.ini file. Try removing the config file and run the program again.")
     exit()
@@ -110,31 +112,31 @@ def add_task(stdscr):
             with open(DATAFILE,"a") as f:
                 f.write('"'+new_task+'"' + ",todo\n")
     except:
-        pass 
+        pass
 
 
 def delete_all(stdscr):
     '''Delete all the tasks'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
+    echo()
     curs_set(False)
     try:
         prompt_string = "Really delete all tasks? (y/n) "
         confirmed = ask_confirmation(stdscr, prompt_string)
-        if confirmed: 
+        if confirmed:
             with open(DATAFILE, 'w'):
-                pass        
+                pass
     except:
         pass
 
 
-def calcurse_export(stdscr):
+def calcurse_import(stdscr):
     '''Import todo events from calcurse database'''
     y_max, _ = stdscr.getmaxyx()
     try:
         prompt_string = "Import tasks from calcurse? (y/n) "
         confirmed = ask_confirmation(stdscr, prompt_string)
-        if confirmed: 
+        if confirmed:
             with open(CALCURSE_FILE, 'r') as f:
                 for task in f.readlines():
                     if len(task) > 0:
@@ -147,12 +149,12 @@ def calcurse_export(stdscr):
 def mark_all_as_done(stdscr, tasks):
     '''Mark all the tasks as done'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
+    echo()
     curs_set(False)
     try:
         prompt_string = "Really mark all tasks as done? (y/n) "
         confirmed = ask_confirmation(stdscr, prompt_string)
-        if confirmed: 
+        if confirmed:
             with open(DATAFILE, "w") as f:
                 for task in tasks:
                     f.write(task + ",done\n")
@@ -163,7 +165,7 @@ def mark_all_as_done(stdscr, tasks):
 def mark_all_as_important(stdscr, tasks):
     '''Mark all the tasks as important'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
+    echo()
     curs_set(False)
     try:
         prompt_string = "Really mark all tasks as important? (y/n) "
@@ -179,12 +181,12 @@ def mark_all_as_important(stdscr, tasks):
 def unmark_all(stdscr, tasks):
     '''Unmark all the tasks'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
+    echo()
     curs_set(False)
     try:
         prompt_string = "Really unmark all tasks? (y/n) "
         confirmed = ask_confirmation(stdscr, prompt_string)
-        if confirmed: 
+        if confirmed:
             with open(DATAFILE, "w") as f:
                 for task in tasks:
                     f.write(task + ",todo\n")
@@ -291,33 +293,32 @@ def unmark(stdscr, tasks, statuses):
                     f.write(task+","+status+"\n")
     except:
         pass
-    
+
 
 def ask_confirmation(stdscr, prompt_string):
     '''Ask user confirmation for an action'''
     y_max, x_max = stdscr.getmaxyx()
+    confirmed = True
     if ASK_CONFIRMATIONS:
-        prompt = prompt_string+" "*(x_max-len(prompt_string), color_pair(6))
-        stdscr.addstr(y_max - 3, 0, prompt_string[:x_max-1])
+        prompt = prompt_string + " "*abs(x_max - len(prompt_string) - 1)
+        stdscr.addstr(y_max-2, 0, prompt[:x_max-1], color_pair(6))
         key = stdscr.getkey()
         confirmed = True if key == "y" else False
-    else:
-        confirmed = True
     return confirmed
 
 
 def user_input(stdscr, prompt_string, answer_length):
     '''Ask user to input something and return this string'''
     y_max, x_max = stdscr.getmaxyx()
-    echo() 
+    echo()
     curs_set(True)
-    display_string = str(prompt_string) + " "*abs((x_max-len(prompt_string))-1) 
+    display_string = str(prompt_string) + " "*abs((x_max-len(prompt_string))-1)
     stdscr.addstr(y_max - 3, 0, display_string[:x_max-1], color_pair(5))
     stdscr.refresh()
     line = 2 if (x_max < 25 and answer_length > 4) else 3
     shift = 0 if (x_max < 25 and answer_length > 4) else len(prompt_string)
     user_input = stdscr.getstr(y_max - line, shift, answer_length).decode(encoding="utf-8")
-    noecho() 
+    noecho()
     curs_set(False)
     return user_input
 
@@ -357,13 +358,13 @@ def main(stdscr):
             for index, task in enumerate(tasks):
                 task = task[:x_max-3]
                 if statuses[index] == "done":
-                    stdscr.addstr(index+shift,1,DONE_ICON, color_pair(3)) 
-                    stdscr.addstr(index+shift,3, task, color_pair(3)) 
+                    stdscr.addstr(index+shift,1,DONE_ICON, color_pair(3))
+                    stdscr.addstr(index+shift,3, task, color_pair(3))
                 elif statuses[index] == "important":
-                    stdscr.addstr(index+shift,1,IMPORTANT_ICON, color_pair(7)) 
-                    stdscr.addstr(index+shift,3, task, color_pair(7)) 
-                else: 
-                    stdscr.addstr(index+shift,1,TODO_ICON, color_pair(2)) 
+                    stdscr.addstr(index+shift,1,IMPORTANT_ICON, color_pair(7))
+                    stdscr.addstr(index+shift,3, task, color_pair(7))
+                else:
+                    stdscr.addstr(index+shift,1,TODO_ICON, color_pair(2))
                     stdscr.addstr(index+shift,3, task, color_pair(2))
 
             # Display the hints
@@ -385,24 +386,26 @@ def main(stdscr):
                 stdscr.refresh()
 
             # Handle various keys
-            if key == "q": 
+            if key == "q":
                 prompt_string = "Really exit? (y/n) "
                 confirmed = ask_confirmation(stdscr, prompt_string)
                 running = False if confirmed else True
+            if key in ["a"," "]: add_task(stdscr)
             if key == "D": delete_all(stdscr)
-            if key == "a": add_task(stdscr)
             if key == "v": mark_as_done(stdscr, tasks, statuses)
             if key == "V": mark_all_as_done(stdscr, tasks)
             if key == "i": mark_as_important(stdscr, tasks, statuses)
             if key == "I": mark_all_as_important(stdscr, tasks)
             if key == "u": unmark(stdscr, tasks, statuses)
             if key == "U": unmark_all(stdscr, tasks)
-            if key == "x": calcurse_export(stdscr)
+            if key == "C": calcurse_import(stdscr)
             if key == "?": show_hints = not show_hints
             if key == "d": delete(stdscr, tasks, statuses)
             if key in ["e", "c"]: edit(stdscr, tasks, statuses)
         except KeyboardInterrupt:
-            running = False
+            prompt_string = "Really exit? (y/n) "
+            confirmed = ask_confirmation(stdscr, prompt_string)
+            running = False if confirmed else True
 
     echo()
     curs_set(True)
